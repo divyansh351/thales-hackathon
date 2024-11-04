@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Deepfake Detection</title>
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}"
+        />
+    </head>
+    <body>
+        <div class="container">
+            <h2>Deepfake Detection</h2>
+            <form id="uploadForm">
+                <div class="file-input-wrapper">
+                    <label for="fileInput" class="file-label"
+                        >Choose a file</label
+                    >
+                    <input
+                        type="file"
+                        id="fileInput"
+                        class="file-input"
+                        accept="image/*,video/*"
+                        required
+                    />
+                </div>
+                <span id="fileName" class="file-name">No file chosen</span>
+                <button type="submit">Upload & Detect</button>
+            </form>
+            <div id="result" class="result"></div>
+        </div>
+
+        <script>
+            const form = document.getElementById("uploadForm");
+            const fileInput = document.getElementById("fileInput");
+            const fileNameDisplay = document.getElementById("fileName");
+            const resultDiv = document.getElementById("result");
+
+            // Display the selected file name
+            fileInput.addEventListener("change", () => {
+                const file = fileInput.files[0];
+                fileNameDisplay.textContent = file
+                    ? file.name
+                    : "No file chosen";
+            });
+
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                resultDiv.textContent = "Processing...";
+                resultDiv.style.opacity = "0";
+
+                const file = fileInput.files[0];
+                const formData = new FormData();
+                formData.append("file", file);
+
+                try {
+                    const response = await fetch("/predict", {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        resultDiv.textContent = `Result: ${data.label}`;
+                    } else {
+                        const errorData = await response.json();
+                        resultDiv.textContent = `Error: ${errorData.error}`;
+                    }
+                    resultDiv.style.opacity = "1";
+                } catch (error) {
+                    resultDiv.textContent =
+                        "An error occurred. Please try again.";
+                    console.error(error);
+                    resultDiv.style.opacity = "1";
+                }
+            });
+        </script>
+    </body>
+</html>
